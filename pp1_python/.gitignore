@@ -5,3 +5,4 @@
 *.sqlite3
 database.db
 .bscode/
+__pycache__/
