@@ -4,10 +4,10 @@ Proyecto de la EFI de Práctica Profesionalizante I: Python. Expone una API REST
 
 ## Integrantes
 
-- Juan Ignacio Andrada Guzman - [juanignacioandrada20-gif]
-- Tomas Castelo - [Tomaz809]
-- Lautaro Ocanto - [laautisz]
-- Geronimo Martin Torasso - [Gerot1234]
+- Juan Ignacio Andrada Guzman - [@juanignacioandrada20-gif](https://github.com/juanignacioandrada20-gif)
+- Tomas Castelo — [@Tomaz809](https://github.com/Tomaz809)
+- Lautaro Ocanto - [@laautisz](https://github.com/laautisz)
+- Geronimo Martin Torasso - [@Gerot1234](https://github.com/Gerot1234)
 
 ## Requisitos
 
@@ -17,9 +17,9 @@ Proyecto de la EFI de Práctica Profesionalizante I: Python. Expone una API REST
 ## Instalación y ejecución
 
 1. Clonar el repositorio y ubicarse en la raíz del proyecto.
-2. Sincronizar el entorno e instalar dependencias: uv sync
-3. Aplicar las migraciones para crear la base de datos local: uv run alembic upgrade head
-4. Iniciar el servidor de desarrollo: uv run uvicorn src.main:app --reload
+2. Sincronizar el entorno e instalar dependencias: `uv sync`
+3. Aplicar las migraciones para crear la base de datos local: `uv run alembic upgrade head`
+4. Iniciar el servidor de desarrollo: `uv run uvicorn src.main:app --reload`
 
 * La documentación interactiva (Swagger) se encuentra disponible en: <http://127.0.0.1:8000/docs>
 * Los datos se almacenan de forma local en el archivo database.db.
