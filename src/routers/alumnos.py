@@ -27,7 +27,7 @@ NOT_FOUND_RESPONSE = {
 
 # CREATE
 @router.post("/", response_model=AlumnoPublic, status_code=status.HTTP_201_CREATED)
-def create_alumno(data: AlumnoCreate, Session: SessionDep):
+def crear_alumno(data: AlumnoCreate, Session: SessionDep):
     db_alumno = Alumno.model_validate(data)
     Session.add(db_alumno)
     Session.commit()
