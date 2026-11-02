@@ -27,11 +27,11 @@ NOT_FOUND_RESPONSE = {
 
 # CREATE
 @router.post("/", response_model=AlumnoPublic, status_code=status.HTTP_201_CREATED)
-def crear_alumno(data: AlumnoCreate, Session: SessionDep):
+def crear_alumno(data: AlumnoCreate, session: SessionDep):
     db_alumno = Alumno.model_validate(data)
-    Session.add(db_alumno)
-    Session.commit()
-    Session.refresh(db_alumno)
+    session.add(db_alumno)
+    session.commit()
+    session.refresh(db_alumno)
     return db_alumno
 
 # GET
@@ -44,7 +44,8 @@ def listar_alumno_id(id: int, session: SessionDep):
     alumno = session.get(Alumno, id)
     if not alumno:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"alumno con {id} no encontrado"
         )
     return alumno
 
@@ -54,7 +55,8 @@ def actualizar_alumno(id: int, data: AlumnoCreate, session: SessionDep):
     alumno_db = session.get(Alumno, id)
     if not alumno_db:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"alumno con {id} no encontrado"
         )
     alumno_data = data.model_dump(exclude_unset=True)
     alumno_db.sqlmodel_update(alumno_data)
@@ -64,12 +66,13 @@ def actualizar_alumno(id: int, data: AlumnoCreate, session: SessionDep):
     return alumno_db
 
 # DELETE
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, response=NOT_FOUND_RESPONSE)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, responses=NOT_FOUND_RESPONSE)
 def borrar_alumno(id: int, session: SessionDep):
     alumno = session.get(Alumno, id)
     if not alumno:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"alumno con {id} no encontrado"
         )
     session.delete(alumno)
     session.commit()

@@ -1,7 +1,10 @@
-from typing import Annotated, Optional
+from typing import Annotated, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
-from models.materia import MateriaPublic
+from src.models.materia import MateriaPublic
 
+if TYPE_CHECKING:
+    from src.models.alumno import Alumno
+    from src.models.materia import Materia
 class CarreraBase(SQLModel):
     nombre: Annotated[str, Field(max_length=100)]
     codigo: Annotated[int, Field(ge=0, le=9999)]
@@ -9,8 +12,8 @@ class CarreraBase(SQLModel):
 class Carrera(CarreraBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     codigo: Annotated[int, Field(ge=0, le=9999, unique=True, index=True)]
-    materias: list[{"materia"}]= Relationship(back_populates="Carrera")
-    alumnos: list[{"alumno"}]= Relationship(back_populates="Carrera")
+    materias: list["Materia"]= Relationship(back_populates="carrera")
+    alumnos: list["Alumno"]= Relationship(back_populates="carrera")
 
 class AlumnoEnCarrera(SQLModel):
     id: int
@@ -29,5 +32,5 @@ class CarreraCreate(CarreraBase):
     pass
 
 class CarreraUpdate(SQLModel):
-    nombre: Annotated[str, Field(min_length=1, max_length=50)] 
-    codigo: Annotated[int, Field(ge=0, le=9999)]
+    nombre: Annotated[str, Field(min_length=1, max_length=50)] | None = None
+    codigo: Annotated[int, Field(ge=0, le=9999)] | None = None 

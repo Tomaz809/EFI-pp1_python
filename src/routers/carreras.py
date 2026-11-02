@@ -43,7 +43,8 @@ def listar_carrera_id(id: int, session: SessionDep):
     carrera = session.get(Carrera, id)
     if not carrera:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"Carrera con {id} no encontrado"
         )
     return carrera
 
@@ -53,7 +54,8 @@ def actualizar_carrera(id: int, data: CarreraCreate, session: SessionDep):
     carrera_db = session.get(Carrera, id)
     if not carrera_db:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"Carrera con {id} no encontrado"
         )
     carrera_data = data.model_dump(exclude_unset=True)
     carrera_db.sqlmodel_update(carrera_data)
@@ -67,7 +69,8 @@ def borrar_carrera(id: int, session: SessionDep):
     carrera = session.get(Carrera, id)
     if not carrera:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"Carrera con {id} no encontrado"
         )
     session.delete(carrera)
     session.commit()

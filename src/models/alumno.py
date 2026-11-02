@@ -1,7 +1,9 @@
-from typing import Annotated, Optional
+from typing import Optional, TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship
-from models.carrera import CarreraPublic, Carrera
+from src.models.carrera import CarreraPublic
 
+if TYPE_CHECKING:
+    from src.models.carrera import Carrera
 
 class AlumnoBase(SQLModel):
     nombre: str = Field(min_length=1, max_length=80)
@@ -15,13 +17,8 @@ class Alumno(AlumnoBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     dni: str = Field(min_length=7, max_length=12, unique=True, index=True)
     email: str = Field(min_length=5, max_length=100, unique=True, index=True)
-    legajo: int = Field(ge=0, le=99999, unique=True, idex=True)
-    carrera_id: Optional[int] = Field(
-        default=None,
-        foreign_key="carrera.id",
-        ondelete="SET NULL",
-    )
-
+    legajo: int = Field(ge=0, le=99999, unique=True, index=True)
+    carrera_id: Optional[int] = Field(default=None, foreign_key="carrera.id", ondelete="SET NULL",)
     carrera: Optional["Carrera"] = Relationship(back_populates="alumnos")
 
 

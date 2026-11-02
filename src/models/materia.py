@@ -1,7 +1,9 @@
-from typing import Annotated, Optional, list
+from typing import Annotated, Optional, TYPE_CHECKING
 from sqlmodel import Relationship, SQLModel, Field
-from models.carrera import Carrera
 
+#resolver error de importacion 
+if TYPE_CHECKING:
+    from src.models.carrera import Carrera
 
 class MateriaBase(SQLModel):
     nombre_materia: Annotated[str, Field(max_length=50)]
@@ -13,12 +15,7 @@ class MateriaBase(SQLModel):
 class Materia(MateriaBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     codigo: Annotated[int, Field(ge=0, le=9999, unique=True, index=True)]
-    carrera_id: Optional[int] = Field(
-        default=None,
-        foreign_key="carrera.id",
-        ondelete="SET NULL",
-    )
-
+    carrera_id: Optional[int] = Field(default=None, foreign_key="carrera.id", ondelete="SET NULL",)
     carrera: Optional["Carrera"] = Relationship(back_populates="materias")
 
 

@@ -15,7 +15,7 @@ class CorrelativaBase(SQLModel):
 
 
 class Correlativa(CorrelativaBase, table=True):
-    _table_args_ = (
+    __table_args__ = (
         CheckConstraint(
             "materia_id != correlativa_id",
             name="check_correlativa_no_self_reference",

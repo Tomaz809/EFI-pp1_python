@@ -43,7 +43,8 @@ def listar_materia_id(id: int, session: SessionDep):
     materia = session.get(Materia, id)
     if not materia:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"Materia con {id} no encontrado"
         )
     return materia
 
@@ -53,7 +54,8 @@ def actualizar_materia(id: int, data: MateriaCreate, session: SessionDep):
     materia_db = session.get(Materia, id)
     if not materia_db:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"Materia con {id} no encontrado"
         )
     materia_data = data.model_dump(exclude_unset=True)
     materia_db.sqlmodel_update(materia_data)
@@ -68,7 +70,8 @@ def borrar_materia(id: int, session: SessionDep):
     materia = session.get(Materia, id)
     if not materia:
         raise HTTPException(
-            status_code=NOT_FOUND_RESPONSE
+            status_code=404,
+            detail=f"Materia con {id} no encontrado"
         )
     session.delete(materia)
     session.commit()
