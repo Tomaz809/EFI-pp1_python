@@ -1,80 +1,76 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlmodel import paginate
+from sqlmodel import Session, select
 
 from src.database import get_session
-from src.models.correlativa import Correlativa, CorrelativaBase, CorrelativaCreate, CorrelativaPublic
-
+from src.models.correlativa import Correlativa, CorrelativaCreate, CorrelativaPublic
+from src.models.materia import Materia
 
 router = APIRouter(prefix="/correlativas", tags=["Correlativas"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 NOT_FOUND_RESPONSE = {
     404: {
-        "description": "Response not found si no se encuentra el id",
+        "description": "Recurso no encontrado",
         "content": {
             "application/json": {
-                "example": {
-                    "detail": "Materia con id {id} no encontrada",
-                }
+                "example": {"detail": "Relacion de correlatividad no encontrada"}
             }
         },
     },
 }
 
-# CREATE
+
 @router.post("/", response_model=CorrelativaPublic, status_code=status.HTTP_201_CREATED)
-def crear_correlativa(data: CorrelativaCreate, session: SessionDep):
+def vincular_correlativa(data: CorrelativaCreate, session: SessionDep):
+    if data.materia_id == data.correlativa_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Una materia no puede ser correlativa de si misma",
+        )
+
+    if not session.get(Materia, data.materia_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="La materia base no existe"
+        )
+    if not session.get(Materia, data.correlativa_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="La materia correlativa no existe"
+        )
+
+    relacion_existente = session.get(Correlativa, (data.materia_id, data.correlativa_id))
+    if relacion_existente:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La relacion de correlatividad ya se encuentra registrada",
+        )
+
     db_correlativa = Correlativa.model_validate(data)
     session.add(db_correlativa)
     session.commit()
     session.refresh(db_correlativa)
     return db_correlativa
 
-# GET
+
 @router.get("/", response_model=Page[CorrelativaPublic])
 def listar_correlativas(session: SessionDep):
     return paginate(session, select(Correlativa))
 
-@router.get("/{id}", response_model=CorrelativaPublic, responses=NOT_FOUND_RESPONSE)
-def listar_correlativa_id(id: int, session: SessionDep):
-    correlativa = session.get(Correlativa, id)
-    if not correlativa:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Correlativa con {id} no encontrado"
-        )
-    return correlativa
 
-# UPDATE
-@router.put("/{id}", response_model=CorrelativaPublic, responses=NOT_FOUND_RESPONSE)
-def actualizar_correlativa(id: int, data: CorrelativaCreate, session: SessionDep):
-    correlativa_db = session.get(Correlativa, id)
-    if not correlativa_db:
+@router.delete(
+    "/{materia_id}/{correlativa_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=NOT_FOUND_RESPONSE,
+)
+def borrar_correlativa(materia_id: int, correlativa_id: int, session: SessionDep):
+    relacion = session.get(Correlativa, (materia_id, correlativa_id))
+    if not relacion:
         raise HTTPException(
-            status_code=404,
-            detail=f"Correlativa con {id} no encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Relacion de correlatividad no encontrada",
         )
-    correlativa_data = data.model_dump(exclude_unset=True)
-    correlativa_db.sqlmodel_update(correlativa_data)
-    session.add(correlativa_db)
-    session.commit()
-    return correlativa_db
-
-# DELETE
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, responses=NOT_FOUND_RESPONSE)
-def borrar_correlativa(id: int, session: SessionDep):
-    correlativa = session.get(Correlativa, id)
-    if not correlativa:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Correlativa con {id} no encontrado"
-        )
-    session.delete(correlativa)
+    session.delete(relacion)
     session.commit()
     return None
-
-
-

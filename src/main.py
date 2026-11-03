@@ -5,22 +5,27 @@ from fastapi_pagination import add_pagination
 from src.routers import alumnos, carreras, correlativas, materias
 
 app = FastAPI(
-    title= "Gestion academica",
-    description= "Visualizacion de materias por carrera y regimen de correlativas.",
-    version= "1.0.0",
+    title="Gestion Academica",
+    description="API para gestion de carreras, materias, correlatividades y alumnos.",
+    version="1.0.0",
 )
 
-app.include_router(alumnos.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5500",
+        # agregar url de vercel
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(carreras.router)
 app.include_router(materias.router)
+app.include_router(alumnos.router)
 app.include_router(correlativas.router)
 
 add_pagination(app)
-
-app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["http://127.0.0.1:5500"], #agregar la url de versel cuando se tenga
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-)

@@ -1,77 +1,98 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlmodel import paginate
+from sqlmodel import Session, select
 
 from src.database import get_session
-from src.models.materia import Materia, MateriaCreate, MateriaPublic, MateriaPublicNested
-
+from src.models.correlativa import Correlativa
+from src.models.materia import (
+    Materia,
+    MateriaCreate,
+    MateriaPublic,
+    MateriaPublicNested,
+    MateriaUpdate,
+)
 
 router = APIRouter(prefix="/materias", tags=["Materias"])
 SessionDep = Annotated[Session, Depends(get_session)]
 
 NOT_FOUND_RESPONSE = {
     404: {
-        "description": "Response not found si no se encuentra el id",
+        "description": "Recurso no encontrado",
         "content": {
             "application/json": {
-                "example": {
-                    "detail": "Materia con id {id} no encontrada",
-                }
+                "example": {"detail": "Materia con id {id} no encontrada"}
             }
         },
     },
 }
 
-# CREATE
+
 @router.post("/", response_model=MateriaPublic, status_code=status.HTTP_201_CREATED)
 def crear_materia(data: MateriaCreate, session: SessionDep):
+    if session.exec(select(Materia).where(Materia.codigo == data.codigo)).first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="El codigo de materia ya existe"
+        )
     db_materia = Materia.model_validate(data)
     session.add(db_materia)
     session.commit()
     session.refresh(db_materia)
     return db_materia
 
-# GET
+
 @router.get("/", response_model=Page[MateriaPublic])
 def listar_materias(session: SessionDep):
-    return paginate(session, select(Materia))
+    return paginate(session, select(Materia).order_by(Materia.id))
 
-@router.get("/{id}", response_model=MateriaPublic, responses=NOT_FOUND_RESPONSE)
-def listar_materia_id(id: int, session: SessionDep):
+
+@router.get("/{id}", response_model=MateriaPublicNested, responses=NOT_FOUND_RESPONSE)
+def obtener_materia(id: int, session: SessionDep):
     materia = session.get(Materia, id)
     if not materia:
         raise HTTPException(
-            status_code=404,
-            detail=f"Materia con {id} no encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Materia con id {id} no encontrada",
         )
-    return materia
 
-# UPDATE
-@router.put("/{id}", response_model=MateriaPublic, responses=NOT_FOUND_RESPONSE)
-def actualizar_materia(id: int, data: MateriaCreate, session: SessionDep):
+    ids_requisitos = session.exec(
+        select(Correlativa.correlativa_id).where(Correlativa.materia_id == id)
+    ).all()
+    materias_requisito = (
+        session.exec(select(Materia).where(Materia.id.in_(ids_requisitos))).all()
+        if ids_requisitos
+        else []
+    )
+
+    respuesta = MateriaPublicNested.model_validate(materia)
+    respuesta.correlativas = [MateriaPublic.model_validate(m) for m in materias_requisito]
+    return respuesta
+
+
+@router.patch("/{id}", response_model=MateriaPublic, responses=NOT_FOUND_RESPONSE)
+def actualizar_materia(id: int, data: MateriaUpdate, session: SessionDep):
     materia_db = session.get(Materia, id)
     if not materia_db:
         raise HTTPException(
-            status_code=404,
-            detail=f"Materia con {id} no encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Materia con id {id} no encontrada",
         )
-    materia_data = data.model_dump(exclude_unset=True)
-    materia_db.sqlmodel_update(materia_data)
+    datos = data.model_dump(exclude_unset=True)
+    materia_db.sqlmodel_update(datos)
     session.add(materia_db)
     session.commit()
     session.refresh(materia_db)
     return materia_db
 
-# DELETE
+
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT, responses=NOT_FOUND_RESPONSE)
 def borrar_materia(id: int, session: SessionDep):
     materia = session.get(Materia, id)
     if not materia:
         raise HTTPException(
-            status_code=404,
-            detail=f"Materia con {id} no encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Materia con id {id} no encontrada",
         )
     session.delete(materia)
     session.commit()
