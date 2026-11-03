@@ -27,6 +27,7 @@ class Materia(MateriaBase, table=True):
 class MateriaPublic(MateriaBase):
     id: int
     carrera_id: Optional[int] = None
+    correlativas_ids: list[int] = Field(default_factory=list)
 
 
 class MateriaPublicNested(MateriaPublic):

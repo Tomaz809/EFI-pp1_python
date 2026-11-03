@@ -44,7 +44,22 @@ def crear_materia(data: MateriaCreate, session: SessionDep):
 
 @router.get("/", response_model=Page[MateriaPublic])
 def listar_materias(session: SessionDep):
-    return paginate(session, select(Materia).order_by(Materia.id))
+    relaciones = session.exec(select(Correlativa)).all()
+    mapa_correlativas: dict[int, list[int]] = {}
+    for r in relaciones:
+        mapa_correlativas.setdefault(r.materia_id, []).append(r.correlativa_id)
+
+    query = select(Materia).order_by(Materia.anio, Materia.id)
+    paginada = paginate(session, query)
+
+    items_public = []
+    for m in paginada.items:
+        m_dict = m.model_dump()
+        m_dict["correlativas_ids"] = mapa_correlativas.get(m.id, [])
+        items_public.append(MateriaPublic.model_validate(m_dict))
+
+    paginada.items = items_public
+    return paginada
 
 
 @router.get("/{id}", response_model=MateriaPublicNested, responses=NOT_FOUND_RESPONSE)
