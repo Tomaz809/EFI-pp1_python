@@ -44,8 +44,9 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5500",
-        # agregar url de vercel
+        "https://efi-pp1-javascript.vercel.app"
     ],
+    allow_origin_regex=r"https://efi-pp1-javascript-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
